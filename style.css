@@ -1,0 +1,19 @@
+a {
+  text-decoration: none;
+  color: gray;
+}
+
+.list-group-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5em;
+}
+
+#data-panel {
+  margin: 2em auto;
+}
+
+#display-mode {
+  margin-left: auto;
+}

@@ -1,59 +1,65 @@
-const BASE_URL = `https://webdev.alphacamp.io`
-const INDEX_URL = BASE_URL + `/api/movies/`
-const POSTER_URL = BASE_URL + `/posters/`
+const BASE_URL = `https://webdev.alphacamp.io`;
+const INDEX_URL = BASE_URL + `/api/movies/`;
+const POSTER_URL = BASE_URL + `/posters/`;
 
-const dataPanel = document.querySelector('#data-panel')
-const movieModal = document.querySelector('#movie-modal')
-const searchForm = document.querySelector('#search-form')
-const searchInput = document.querySelector('#search-input')
-const paginator = document.querySelector('#paginator')
+const dataPanel = document.querySelector("#data-panel");
+const movieModal = document.querySelector("#movie-modal");
+const searchForm = document.querySelector("#search-form");
+const searchInput = document.querySelector("#search-input");
+const paginator = document.querySelector("#paginator");
+const displayMode = document.querySelector("#display-mode");
 
-const movieList = []
-let filteredMovies = []
-const moviesPerPage = 12
+const movieList = [];
+let filteredMovies = [];
+const moviesPerPage = 12;
+let currentPage = 1; //NEW:make currentPage global
+let currentMode = "card"; //NEW:add variable: currentMode
 
-
-/*    ----ALTER LIST----    */
+/*    ----ALTER LIST section start----    */
 //make userList from API
-axios.get(INDEX_URL).then((response) => {
-  let movies = response.data.results
-  movieList.push(...movies)
-  renderPaginator(movieList.length)
-  renderList(getMoviesByPage(1))
-})
-  .catch((err) => console.log(err))
+axios
+  .get(INDEX_URL)
+  .then((response) => {
+    let movies = response.data.results;
+    movieList.push(...movies);
+    renderPaginator(movieList.length);
+    renderList(getMoviesByPage(1));
+  })
+  .catch((err) => console.log(err));
 
 //make currentList from currentPage
 function getMoviesByPage(page) {
   if (filteredMovies.length === 0) {
-    data = movieList
+    data = movieList;
   } else {
-    data = filteredMovies
+    data = filteredMovies;
   }
   // const data = filteredMovies.length ? filteredMovies : movieList
-  const startIndex = (page - 1) * moviesPerPage
-  return data.slice(startIndex, startIndex + moviesPerPage)
+  const startIndex = (page - 1) * moviesPerPage;
+  return data.slice(startIndex, startIndex + moviesPerPage);
 }
 
 //add movies to favoriteList when add button clicked
 function addToFavorite(id) {
-  const favoriteMovies = JSON.parse(localStorage.getItem('favoriteMovies')) || []//favoriteMovies沒有東西的話就回傳空陣列
-  const movie = movieList.find((movie) => movie.id === id)//.fiind(陣列)回傳第一個函示結果為true的元素
-  if (favoriteMovies.some((movie) => movie.id === id)) {//.some(陣列)檢查陣列中是否有符合函式的元素，有的話回傳true
-    return alert('此電影已經在收藏清單中！')
+  const favoriteMovies =
+    JSON.parse(localStorage.getItem("favoriteMovies")) || []; //favoriteMovies沒有東西的話就回傳空陣列
+  const movie = movieList.find((movie) => movie.id === id); //.fiind(陣列)回傳第一個函示結果為true的元素
+  if (favoriteMovies.some((movie) => movie.id === id)) {
+    //.some(陣列)檢查陣列中是否有符合函式的元素，有的話回傳true
+    return alert("此電影已經在收藏清單中！");
   }
-  favoriteMovies.push(movie)
-  localStorage.setItem('favoriteMovies', JSON.stringify(favoriteMovies))
+  favoriteMovies.push(movie);
+  localStorage.setItem("favoriteMovies", JSON.stringify(favoriteMovies));
 }
+/*    ----ALTER LIST section end----    */
 
-
-/*    ----RENDER functions----    */
-//render page from specified list
+/*    ----RENDER section start----    */
+//render cards from specified list
 function renderList(list) {
-  let rawHTML = ``
-  list.forEach((item) => {//we need title and image
-    // console.log(item)
-    rawHTML += `
+  let rawHTML = ``;
+  if (currentMode === "card") {
+    list.forEach((item) => {
+      rawHTML += `
     <div class="col-sm-3">
         <div class="m-3">
           <div class="card">
@@ -64,35 +70,51 @@ function renderList(list) {
             </div>
             <div class="card-footer text-muted">
               <button class="btn btn-primary btn-show-movie" data-bs-toggle="modal"
-                data-bs-target="#movie-modal" data-id="${item.id}">info</button>
-              <button class="btn btn-info btn-add-favorite" data-id="${item.id}">+</button>
+                data-bs-target="#movie-modal" data-id="${item.id}">More</button>
+              <button class="btn btn-info btn-add-favorite" data-id="${item.id
+        }">+</button>
             </div>
           </div>
         </div>
       </div>
     </div>
-    `
-  });
-  dataPanel.innerHTML = rawHTML
+    `;
+    });
+  } else if (currentMode === "list") {
+    rawHTML += `<ul class="list-group">`;
+    list.forEach((item) => {
+      rawHTML += `
+		<li class="list-group-item">
+		<div><h5>${item.title}</h5></div>
+		<div>
+			<button class="btn btn-primary btn-show-movie" data-bs-toggle="modal" data-bs-target="#movie-modal" data-id="${item.id}">More</button>
+			<button class="btn btn-info btn-add-favorite" data-id="${item.id}">+</button>
+		</div>
+		</li>
+		`;
+    });
+    rawHTML += `</ul>`;
+  }
+  dataPanel.innerHTML = rawHTML;
 }
 
 //render paginator
 function renderPaginator(totalMovies) {
-  let rawHTML = ``
-  let totalPage = Number(Math.ceil(totalMovies / moviesPerPage))
-  console.log(`totalPage:${totalPage}`)
+  let rawHTML = ``;
+  let totalPage = Number(Math.ceil(totalMovies / moviesPerPage));
+  console.log(`totalPage:${totalPage}`);
   for (page = 1; page <= totalPage; page++) {
     rawHTML += `
     <li class="page-item"><a class="page-link" href="#" data-page="${page}">${page}</a></li>
-    `
+    `;
   }
-  paginator.innerHTML = rawHTML
+  paginator.innerHTML = rawHTML;
 }
 
 //show modal when button clicked
 function showModal(id) {
   axios.get(INDEX_URL + id).then((response) => {
-    let movie = response.data.results
+    let movie = response.data.results;
     movieModal.innerHTML = `
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -120,46 +142,63 @@ function showModal(id) {
           </div>
         </div>
       </div>
-    `
-  })
+    `;
+  });
 }
+/*    ----RENDER section end----    */
 
-
-/*    ----BUTTONS----    */
+/*    ----BUTTONS section start----    */
 //info button and add button
-dataPanel.addEventListener('click', function onPanelClick(event) {
-  let target = event.target
-  if (target.matches('.btn-show-movie')) {
+dataPanel.addEventListener("click", function onPanelClick(event) {
+  let target = event.target;
+  if (target.matches(".btn-show-movie")) {
     //show movie modal
-    console.log(target.dataset)
-    showModal(Number(target.dataset.id))
-  } else if (target.matches('.btn-add-favorite')) {
+    console.log(target.dataset);
+    showModal(Number(target.dataset.id));
+  } else if (target.matches(".btn-add-favorite")) {
     //add movie to favoriteList
-    addToFavorite(Number(target.dataset.id))
+    addToFavorite(Number(target.dataset.id));
   }
-})
+});
 
 //add movies to filteredList
-searchForm.addEventListener('submit', function onSearchFormSubmitted(event) {
-  filteredMovies = []
-  event.preventDefault()
-  const keyword = searchInput.value.trim().toLowerCase()
+searchForm.addEventListener("submit", function onSearchFormSubmitted(event) {
+  filteredMovies = [];
+  event.preventDefault();
+  const keyword = searchInput.value.trim().toLowerCase();
   for (const movie of movieList) {
     if (movie.title.toLowerCase().includes(keyword)) {
-      filteredMovies.push(movie)
+      filteredMovies.push(movie);
     }
   }
   if (filteredMovies.length === 0) {
-    return alert(`"${keyword}"沒有符合的搜尋項目`)
+    return alert(`"${keyword}"沒有符合的搜尋項目`);
   }
-  renderPaginator(filteredMovies.length)
-  renderList(getMoviesByPage(1)) //預設顯示第 1 頁的搜尋結果
-})
+  renderPaginator(filteredMovies.length);
+  renderList(getMoviesByPage(1)); //預設顯示第 1 頁的搜尋結果
+});
 
 //show movies from currentPage
-paginator.addEventListener('click', function (event) {
-  let target = event.target
-  if (target.tagName !== 'A') return
-  let currentPage = Number(target.dataset.page)
-  renderList(getMoviesByPage(currentPage))
-})
+paginator.addEventListener("click", function (event) {
+  let target = event.target;
+  if (target.tagName !== "A") return;
+  //NEW: active page
+  const allPageButtons = Object.values(paginator.children);
+  allPageButtons.forEach((page) => page.classList.remove("active"));
+  target.parentElement.classList.add("active");
+  currentPage = Number(target.dataset.page);
+  renderList(getMoviesByPage(currentPage));
+});
+
+//NEW:alter display mode
+displayMode.addEventListener("click", function (event) {
+  let target = event.target;
+  if (target.matches(".fa-th")) {
+    currentMode = "card";
+  }
+  if (target.matches(".fa-bars")) {
+    currentMode = "list";
+  }
+  renderList(getMoviesByPage(currentPage));
+});
+/*    ----BUTTONS section end----    */
